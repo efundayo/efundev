@@ -6,8 +6,8 @@
   vars:
     # prefix for naming
     prefix: staging
-    ec2_access_key: AKIAIAF7O76ZXR5NP5MA
-    ec2_secret_key: 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
+    ec2_access_key: AKIAIMG5BZXSCIWZZQEQ
+    ec2_secret_key: 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
     ec2_region: us-west-2
     ec2_image: ami-6635cd06
 #   ec2_image: ami-efd0428f
@@ -61,13 +61,13 @@
 
 ##APPEND NEW EC2 HOSTNAME TO /ETC/ANSIBLE/HOSTS
     - name: Generate Inventory Parameters for new ec2 host
-      lineinfile: dest=/etc/ansible/hosts line="{{ item.public_ip }} ansible_ssh_user=ubuntu  ansible_ssh_private_key_file=/opt/mioemi2000.pem  mysql_root_password=mysqlrootpassword" state=present
+      lineinfile: dest=/etc/ansible/hosts line="{{ item.public_ip }} ansible_ssh_user=ubuntu  ansible_ssh_private_key_file=mioemi2000.pem  mysql_root_password=mysqlrootpassword" state=present
       with_items: "{{ ec2.instances }}"
 
 ### EDITING  web_lab_server.sh script
     - name: Replacing the public Hostname in web_lab_server.sh script
       lineinfile: 
-        dest: ~/shell_scripts/webserver/web_lab_server.sh
+        dest: webserver/web_lab_server.sh
         regexp: '^(.*)lab_gateway_public_hostname=(.*)$' 
         line: 'lab_gateway_public_hostname={{ item.public_dns_name }}'
         backrefs: yes
@@ -75,7 +75,7 @@
 
     - name: Replacing the public IP Address in web_lab_server.sh script
       lineinfile: 
-        dest: ~/shell_scripts/webserver/web_lab_server.sh
+        dest: webserver/web_lab_server.sh
         regexp: '^(.*)lab_gateway_public_ip=(.*)$' 
         line: 'lab_gateway_public_ip={{ item.public_ip }}'
         backrefs: yes
@@ -84,7 +84,7 @@
 ### EDITING  db_lab_server.sh script
     - name: Replacing the public Hostname in db_lab_server.sh script
       lineinfile: 
-        dest: ~/shell_scripts/dbserver/db_lab_server.sh
+        dest: dbserver/db_lab_server.sh
         regexp: '^(.*)lab_gateway_public_hostname=(.*)$' 
         line: 'lab_gateway_public_hostname={{ item.public_dns_name }}'
         backrefs: yes
@@ -92,7 +92,7 @@
 
     - name: Replacing the public Hostname in db_lab_server.sh script
       lineinfile: 
-        dest: ~/shell_scripts/dbserver/db_lab_server.sh
+        dest: dbserver/db_lab_server.sh
         regexp: '^(.*)lab_gateway_public_ip=(.*)$' 
         line: 'lab_gateway_public_ip={{ item.public_ip }}'
         backrefs: yes
@@ -106,7 +106,7 @@
 
 
   vars:
-    ansible_ssh_private_key_file: "/opt/mioemi2000.pem"
+    ansible_ssh_private_key_file: "mioemi2000.pem"
     ec2_access_key: AKIAIAF7O76ZXR5NP5MA
     ec2_secret_key: VDELVnJeyM6ouVMByUPW4q56srl5j+t2zLw0Mjr3
 
@@ -301,7 +301,7 @@
 #   - name: Replace with WebDockerfile
 #     become: yes
 #     become_method: sudo
-#     copy: src=~/shell_scripts/webserver/WebDockerfile dest=/home/ubuntu/ubuntu/Dockerfile mode=0777
+#     copy: src=webserver/WebDockerfile dest=/home/ubuntu/ubuntu/Dockerfile mode=0777
 
 #    - name:  Building Ubuntu 14.04 Apache2 Web server  dockerfile
 #     become: yes
@@ -313,17 +313,17 @@
 #   - name: Fetch web_lab_server.sh for configuration webserver.mosudi docker container
 #     become: yes
 #     become_method: sudo
-#     copy: src=~/shell_scripts/webserver/web_lab_server.sh dest=/home/ubuntu/web_lab_server.sh mode=0777
+#     copy: src=webserver/web_lab_server.sh dest=/home/ubuntu/web_lab_server.sh mode=0777
 
 #   - name: Fetch host.conf for Icinga2 configuration webserver.mosudi docker container
 #     become: yes
 #     become_method: sudo
-#     copy: src=~/shell_scripts/webserver/webhosts.conf dest=/home/ubuntu/webhosts.conf mode=0777
+#     copy: src=webserver/webhosts.conf dest=/home/ubuntu/webhosts.conf mode=0777
 
 #   - name: Fetch services.conf for Icinga2 configuration webserver.mosudi docker container
 #     become: yes
 #     become_method: sudo
-#     copy: src=~/shell_scripts/webserver/webservices.conf dest=/home/ubuntu/webservices.conf mode=0777
+#     copy: src=webserver/webservices.conf dest=/home/ubuntu/webservices.conf mode=0777
 
 #   - name: Creating ubuntu 14.04 Apache2 Web server docker container with hostname webserver.mosudi
 #     become: yes
@@ -340,7 +340,7 @@
     - name: Replace with WebDockerfile
       become: yes
       become_method: sudo
-      copy: src=~/shell_scripts/webserver/WebDockerfile dest=/home/ubuntu/ubuntu/Dockerfile mode=0777
+      copy: src=webserver/WebDockerfile dest=/home/ubuntu/ubuntu/Dockerfile mode=0777
 
     - name:  Building Ubuntu 14.04 Apache2 Web server  dockerfile
       become: yes
@@ -352,17 +352,17 @@
     - name: Fetch web_lab_server.sh for configuration webserver.mosudi docker container
       become: yes
       become_method: sudo
-      copy: src=~/shell_scripts/webserver/web_lab_server.sh dest=/home/ubuntu/web_lab_server.sh mode=0777
+      copy: src=webserver/web_lab_server.sh dest=/home/ubuntu/web_lab_server.sh mode=0777
 
     - name: Fetch host.conf for Icinga2 configuration webserver.mosudi docker container
       become: yes
       become_method: sudo
-      copy: src=~/shell_scripts/webserver/webhosts.conf dest=/home/ubuntu/webhosts.conf mode=0777
+      copy: src=webserver/webhosts.conf dest=/home/ubuntu/webhosts.conf mode=0777
 
     - name: Fetch services.conf for Icinga2 configuration webserver.mosudi docker container
       become: yes
       become_method: sudo
-      copy: src=~/shell_scripts/webserver/webservices.conf dest=/home/ubuntu/webservices.conf mode=0777
+      copy: src=webserver/webservices.conf dest=/home/ubuntu/webservices.conf mode=0777
 
     - name: Creating ubuntu 14.04 Apache2 Web server docker container with hostname webserver.mosudi
       become: yes
@@ -377,7 +377,7 @@
     - name: Replace with DBDockerfile
       become: yes
       become_method: sudo
-      copy: src=~/shell_scripts/dbserver/DBDockerfile dest=/home/ubuntu/ubuntu/Dockerfile mode=0777
+      copy: src=dbserver/DBDockerfile dest=/home/ubuntu/ubuntu/Dockerfile mode=0777
 
     - name: Building Ubuntu 14.04 Mysql DB server  dockerfile 
       become: yes
@@ -389,23 +389,23 @@
     - name: Fetch db_lab_server.sh for configuration dbserver.mosudi docker container
       become: yes
       become_method: sudo
-      copy: src=~/shell_scripts/dbserver/db_lab_server.sh dest=/home/ubuntu/db_lab_server.sh mode=0777
+      copy: src=dbserver/db_lab_server.sh dest=/home/ubuntu/db_lab_server.sh mode=0777
 
 
     - name: Fetch host.conf for Icinga2 configuration dbserver.mosudi docker container
       become: yes
       become_method: sudo
-      copy: src=~/shell_scripts/dbserver/dbhosts.conf dest=/home/ubuntu/dbhosts.conf mode=0777
+      copy: src=dbserver/dbhosts.conf dest=/home/ubuntu/dbhosts.conf mode=0777
 
     - name: Fetch services.conf for Icinga2 configuration dbserver.mosudi docker container
       become: yes
       become_method: sudo
-      copy: src=~/shell_scripts/dbserver/dbservices.conf dest=/home/ubuntu/dbservices.conf mode=0777
+      copy: src=dbserver/dbservices.conf dest=/home/ubuntu/dbservices.conf mode=0777
 
     - name: Fetch create_icinga2db.sh for Icinga2 configuration dbserver.mosudi docker container
       become: yes
       become_method: sudo
-      copy: src=~/shell_scripts/dbserver/create_icinga2db.sh dest=/home/ubuntu/create_icinga2db.sh mode=0777
+      copy: src=dbserver/create_icinga2db.sh dest=/home/ubuntu/create_icinga2db.sh mode=0777
 
 
     - name: Creating ubuntu 14.04 Mysql Database server docker container with hostname dbserver.mosudi
@@ -421,7 +421,7 @@
     - name: Setting Up Icinga2 DB root password
       become: yes
       become_method: sudo
-      script: ~/shell_scripts/create_icinga2db.sh
+      script: create_icinga2db.sh
       #script will reside within the Ansible master
 
 
