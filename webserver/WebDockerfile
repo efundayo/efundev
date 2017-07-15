@@ -1,0 +1,70 @@
+#
+# Ubuntu Dockerfile
+#
+# https://github.com/dockerfile/ubuntu
+#
+## MOSUDI Using Ubuntu 14.04 aws ec2 instance 
+## MOSUDI cd /home/ubuntu/
+## MOSUDI git clone github.com/dockerfile/ubuntu
+## MOSUDI mv /home/ubuntu/ubuntu/dockerfile  /home/ubuntu/ubuntu/dockerfile_backup
+## MOSUDI mv /home/ubuntu/WebDockerfile  /home/ubuntu/ubuntu/dockerfile
+## MOSUDI docker build -t="dockerfile/ubuntu" /home/ubuntu/ubuntu/
+## MOSUDI docker run -itd --rm dockerfile/ubuntu
+
+# Pull base image.
+FROM ubuntu:14.04
+
+#ARG DEBIAN_FRONTEND=noninteractive
+
+# Install.
+RUN \
+  sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
+  apt-get update && \
+  apt-get -y upgrade && \
+  apt-get install -y \
+		build-essential \
+		byobu \
+		curl \
+		git \
+		htop \
+		man \
+		python-software-properties \
+		software-properties-common \ 
+		unzip \
+		vim \
+		wget \
+
+  && wget -O - https://packages.icinga.com/icinga.key | apt-key add -  
+RUN echo "deb http://packages.icinga.com/ubuntu icinga-trusty main " >> /etc/apt/sources.list
+RUN echo "deb-src http://packages.icinga.com/ubuntu icinga-trusty main " >> /etc/apt/sources.list  && \
+ apt-get update && apt-get install -y \
+		apache2 \
+		bash-completion \
+		icinga2 \
+                nagios-plugins  \
+		openssh-server \
+		php5 \
+		php5-intl \
+		php5-mcrypt php5-imagick  \
+		python \
+		tzdata \
+#RUN sed -i 's/;date.timezone =/date.timezone = Africa\/Lagos/g' /etc/php5/apache2/php.ini && \
+  && icinga2 daemon -C && \
+  service apache2 start -C && \
+ 
+# END OF ADDED LINES
+  rm -rf /var/lib/apt/lists/*
+
+# Add files.
+ADD root/.bashrc /root/.bashrc
+ADD root/.gitconfig /root/.gitconfig
+ADD root/.scripts /root/.scripts
+
+# Set environment variables.
+ENV HOME /root
+
+# Define working directory.
+WORKDIR /root
+
+# Define default command.
+CMD ["bash"]

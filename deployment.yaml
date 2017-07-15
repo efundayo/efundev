@@ -1,0 +1,538 @@
+- name: Create Ec2 Instances
+  hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars:
+    # prefix for naming
+    prefix: staging
+    ec2_access_key: AKIAIAF7O76ZXR5NP5MA
+    ec2_secret_key: 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
+    ec2_region: us-west-2
+    ec2_image: ami-6635cd06
+#   ec2_image: ami-efd0428f
+    ec2_instance_type: t2.micro
+    ec2_keypair: mioemi2000
+    ec2_security_group: crossovericinga
+    ec2_instance_count: 1
+    ec2_vol_size: 25
+    ec2_tag: mioansible2
+#    ec2_volume_size: 26
+    wait_for_port: 22
+
+  tasks:
+    - name: Provision of Ubuntu 14.04  AWS Instance and Demo Lab Setup of (ICINGA2 AND DOCKER CE) by Mosudi Isiaka
+      ec2: 
+        access_key="{{ ec2_access_key }}"
+        secret_key="{{ ec2_secret_key }}"
+        keypair="{{ ec2_keypair }}"
+        group="{{ ec2_security_group }}"
+        type="{{ ec2_instance_type }}"
+        image="{{ ec2_image }}"
+        region="{{ ec2_region }}"
+        instance_tags="{'Name':'{{ ec2_tag }}'}"
+        count="{{ ec2_instance_count }}"
+        wait=true 
+      register: ec2
+
+    - name: Wait for SSH to come up
+      wait_for:
+        host: "{{ item.public_dns_name }}"
+        port: 22
+        delay: 60
+        timeout: 320
+        state: started
+      with_items : "{{ ec2.instances }}"
+      when: ec2 
+
+    - name: accept new ssh fingerprints                                         
+      shell: ssh-keyscan -H {{ item.public_ip }} >> ~/.ssh/known_hosts          
+      with_items: '{{ ec2.instances }}'
+
+#    - name: Add all instance public IPs to host group
+
+    - name: Add all instance public IP Address to host group
+      add_host: 
+#       hostname: "{{ item.public_dns_name }}"
+        hostname: "{{ item.public_ip }}"
+        groups: ec2hosts
+      with_items: "{{ ec2.instances }}"
+
+
+##APPEND NEW EC2 HOSTNAME TO /ETC/ANSIBLE/HOSTS
+    - name: Generate Inventory Parameters for new ec2 host
+      lineinfile: dest=/etc/ansible/hosts line="{{ item.public_ip }} ansible_ssh_user=ubuntu  ansible_ssh_private_key_file=/opt/mioemi2000.pem  mysql_root_password=mysqlrootpassword" state=present
+      with_items: "{{ ec2.instances }}"
+
+### EDITING  web_lab_server.sh script
+    - name: Replacing the public Hostname in web_lab_server.sh script
+      lineinfile: 
+        dest: ~/shell_scripts/webserver/web_lab_server.sh
+        regexp: '^(.*)lab_gateway_public_hostname=(.*)$' 
+        line: 'lab_gateway_public_hostname={{ item.public_dns_name }}'
+        backrefs: yes
+      with_items: "{{ ec2.instances }}"
+
+    - name: Replacing the public IP Address in web_lab_server.sh script
+      lineinfile: 
+        dest: ~/shell_scripts/webserver/web_lab_server.sh
+        regexp: '^(.*)lab_gateway_public_ip=(.*)$' 
+        line: 'lab_gateway_public_ip={{ item.public_ip }}'
+        backrefs: yes
+      with_items: "{{ ec2.instances }}"
+
+### EDITING  db_lab_server.sh script
+    - name: Replacing the public Hostname in db_lab_server.sh script
+      lineinfile: 
+        dest: ~/shell_scripts/dbserver/db_lab_server.sh
+        regexp: '^(.*)lab_gateway_public_hostname=(.*)$' 
+        line: 'lab_gateway_public_hostname={{ item.public_dns_name }}'
+        backrefs: yes
+      with_items: "{{ ec2.instances }}"
+
+    - name: Replacing the public Hostname in db_lab_server.sh script
+      lineinfile: 
+        dest: ~/shell_scripts/dbserver/db_lab_server.sh
+        regexp: '^(.*)lab_gateway_public_ip=(.*)$' 
+        line: 'lab_gateway_public_ip={{ item.public_ip }}'
+        backrefs: yes
+      with_items: "{{ ec2.instances }}"
+
+
+- name: configuration play
+  hosts: ec2hosts
+  user: ubuntu
+  gather_facts: true
+
+
+  vars:
+    ansible_ssh_private_key_file: "/opt/mioemi2000.pem"
+    ec2_access_key: AKIAIAF7O76ZXR5NP5MA
+    ec2_secret_key: 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
+
+  tasks:
+
+#  UPDATE THE UBUNTU LINUX SERVER 
+
+    - name: Only run "update_cache=yes" 
+      become: yes
+      become_method: sudo
+      apt:
+        update_cache: yes
+        cache_valid_time: 86400
+ 
+
+########################################################
+###INCREASE VIRTUAL RAM
+#We have got only 1GB RAM(AWS free tier), at least we have control over virtual RAM
+
+#INCREASE VIRTUAL RAM
+
+    - name: Create 1GB swap space
+      become: yes
+      become_method: sudo
+      command: dd if=/dev/zero of=/swpapace.swp bs=1024 count=1M
+      when: ansible_swaptotal_mb < 1
+
+#Setup the swap file 
+    - name: Setup the swap space
+      become: yes
+      become_method: sudo
+      command: mkswap /swpapace.swp
+      when: ansible_swaptotal_mb < 1
+ 
+#Edit /etc/fstab
+    - name: Add to fstab
+      become: yes
+      become_method: sudo
+      action: lineinfile dest=/etc/fstab regexp="swpapace.swp" line="/swpapace.swp none swap sw 0 0" state=present
+
+#Activate the swap space
+    - name: Activate the swap space
+      become: yes
+      become_method: sudo
+      command: swapon -a
+
+
+    - name: Prepare Server
+      become: yes
+      become_method: sudo
+      apt: "name={{item}} state=latest"
+#     update_cache: yes
+#     cache_valid_time: 86400
+      with_items:
+        - apache2
+        - apt-show-versions
+        - apt-transport-https
+        - build-essential
+        - ca-certificates
+        - curl
+        - fish
+        - libapache2-mod-php5
+        - libauthen-pam-perl
+        - libio-pty-perl
+        - libnet-ssleay-perl
+        - libpam-runtime
+        - mysql-server
+        - openssl
+        - perl
+        - php5-imagick
+        - php5-intl
+        - php5-ldap
+        - php5-mcrypt    
+        - php5-mysql
+        - php5-pgsql
+        - python
+        - python-apt
+        - python-mysqldb
+        - python-pip  
+        - python-software-properties
+        - software-properties-common
+        - vim
+        - wget
+
+    - name: Configure mcrypt 
+      become: yes
+      become_method: sudo
+      shell: " php5enmod mcrypt "
+
+
+## ADDING ICINGA2 AND DOCKER REPOSITORIES AS WELL AS UPDATING REPO.
+    - name: Adding Docker Repository "APK-KEY" 
+      become: yes
+      become_method: sudo
+      shell: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - "
+
+
+    - name: Adding Docker Repo
+      become: yes
+      become_method: sudo
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu trusty stable
+        state: present
+
+
+    - name: Adding Icinga2 Repository "APK-KEY" 
+      become: yes
+      become_method: sudo
+      shell: "wget -O - https://packages.icinga.com/icinga.key | apt-key add - "
+
+
+    - name: Adding Icinga2 Repo DEB
+      become: yes
+      become_method: sudo
+      apt_repository:
+        repo: deb http://packages.icinga.com/ubuntu icinga-trusty main
+        state: present
+
+    - name: Adding Icinga2 Repo SRC
+      become: yes
+      become_method: sudo
+      apt_repository:
+        repo: deb-src http://packages.icinga.com/ubuntu icinga-trusty main
+        state: present
+
+    - name: Update Repository after adding docker and icinga2 repositories
+      become: yes
+      become_method: sudo
+      apt:
+        update_cache: yes
+
+#SERVER CONFIGURATION
+
+    - name: Edit PHP Timezone
+      become: yes
+      become_method: sudo
+      action: lineinfile dest=/etc/php5/apache2/php.ini regexp=";date.timezone =       " line="date.timezone =Africa/Lagos " state=present
+      notify:
+        - restart apache2
+
+    - name: Installing the package  "awscli"
+      become: yes
+      become_method: sudo
+      shell: pip install awscli    
+
+    - name: Install Docker, Icinga, phpmyadmin
+      become: yes
+      become_method: sudo
+      apt: "name={{item}} state=latest"
+#     update_cache: yes
+#     cache_valid_time: 86400
+      with_items:
+        - docker-ce
+        - icinga2
+        - icinga2-ido-mysql
+        - icingacli 
+        - icingaweb2
+        - mysql-client
+        - nagios-plugins
+        - phpmyadmin
+
+#### SETUP DOCKER
+    - name: Creating docker group if it doesnt exist
+      become: yes
+      become_method: sudo
+      group: name=docker state=present
+
+    - name: Running Docker without sudo
+      become: yes
+      become_method: sudo
+      command: usermod -a -G docker {{ ansible_ssh_user }}
+
+#################################################################
+### SETUP LAB DOCKER CONTAINERS FOR ICINGA2 CLIENTS
+
+    - name:  Changing directory and Clone Ubuntu 14.0 Dockerfile
+      shell: bash -c "git clone https://github.com/dockerfile/ubuntu.git"
+      args:
+        chdir: /home/ubuntu/
+
+    - name:  Backup Original Dockerfile
+      shell: bash -c "mv Dockerfile  Dockerfile_backup"
+      args:
+        chdir: /home/ubuntu/ubuntu 
+
+    - name:  Changing directory and Clone Ubuntu Dockerfile Collections
+      shell: bash -c "git clone https://github.com/tianon/docker-brew-ubuntu-core.git"
+      args:
+        chdir: /home/ubuntu/
+
+### LAB UBUNTU XENIAL
+#   - name: Replace with WebDockerfile
+#     become: yes
+#     become_method: sudo
+#     copy: src=~/shell_scripts/webserver/WebDockerfile dest=/home/ubuntu/ubuntu/Dockerfile mode=0777
+
+#    - name:  Building Ubuntu 14.04 Apache2 Web server  dockerfile
+#     become: yes
+#     become_method: sudo 
+#     shell: bash -c 'docker build -t="dockerfile/tianon/docker-brew-ubuntu-core/xenial" /home/tianon/docker-brew-ubuntu-core/xenial/'
+#     args:
+#       chdir: /home/ubuntu/
+
+#   - name: Fetch web_lab_server.sh for configuration webserver.mosudi docker container
+#     become: yes
+#     become_method: sudo
+#     copy: src=~/shell_scripts/webserver/web_lab_server.sh dest=/home/ubuntu/web_lab_server.sh mode=0777
+
+#   - name: Fetch host.conf for Icinga2 configuration webserver.mosudi docker container
+#     become: yes
+#     become_method: sudo
+#     copy: src=~/shell_scripts/webserver/webhosts.conf dest=/home/ubuntu/webhosts.conf mode=0777
+
+#   - name: Fetch services.conf for Icinga2 configuration webserver.mosudi docker container
+#     become: yes
+#     become_method: sudo
+#     copy: src=~/shell_scripts/webserver/webservices.conf dest=/home/ubuntu/webservices.conf mode=0777
+
+#   - name: Creating ubuntu 14.04 Apache2 Web server docker container with hostname webserver.mosudi
+#     become: yes
+#     become_method: sudo 
+#     shell: /home/ubuntu/web_lab_server.sh
+#     args:
+#       chdir: /home/ubuntu/
+#     register: web_lab_container
+
+
+
+
+### LAB APACHE WEB SERVER
+    - name: Replace with WebDockerfile
+      become: yes
+      become_method: sudo
+      copy: src=~/shell_scripts/webserver/WebDockerfile dest=/home/ubuntu/ubuntu/Dockerfile mode=0777
+
+    - name:  Building Ubuntu 14.04 Apache2 Web server  dockerfile
+      become: yes
+      become_method: sudo 
+      shell: bash -c 'docker build -t="dockerfile/ubuntu" /home/ubuntu/ubuntu/'
+      args:
+        chdir: /home/ubuntu/
+
+    - name: Fetch web_lab_server.sh for configuration webserver.mosudi docker container
+      become: yes
+      become_method: sudo
+      copy: src=~/shell_scripts/webserver/web_lab_server.sh dest=/home/ubuntu/web_lab_server.sh mode=0777
+
+    - name: Fetch host.conf for Icinga2 configuration webserver.mosudi docker container
+      become: yes
+      become_method: sudo
+      copy: src=~/shell_scripts/webserver/webhosts.conf dest=/home/ubuntu/webhosts.conf mode=0777
+
+    - name: Fetch services.conf for Icinga2 configuration webserver.mosudi docker container
+      become: yes
+      become_method: sudo
+      copy: src=~/shell_scripts/webserver/webservices.conf dest=/home/ubuntu/webservices.conf mode=0777
+
+    - name: Creating ubuntu 14.04 Apache2 Web server docker container with hostname webserver.mosudi
+      become: yes
+      become_method: sudo 
+      shell: /home/ubuntu/web_lab_server.sh
+      args:
+        chdir: /home/ubuntu/
+#     register: web_lab_container
+
+
+### LAB MYSQL DB SERVER
+    - name: Replace with DBDockerfile
+      become: yes
+      become_method: sudo
+      copy: src=~/shell_scripts/dbserver/DBDockerfile dest=/home/ubuntu/ubuntu/Dockerfile mode=0777
+
+    - name: Building Ubuntu 14.04 Mysql DB server  dockerfile 
+      become: yes
+      become_method: sudo
+      shell: bash -c 'docker build -t="dockerfile/ubuntu" /home/ubuntu/ubuntu/'
+      args:
+        chdir: /home/ubuntu/
+
+    - name: Fetch db_lab_server.sh for configuration dbserver.mosudi docker container
+      become: yes
+      become_method: sudo
+      copy: src=~/shell_scripts/dbserver/db_lab_server.sh dest=/home/ubuntu/db_lab_server.sh mode=0777
+
+
+    - name: Fetch host.conf for Icinga2 configuration dbserver.mosudi docker container
+      become: yes
+      become_method: sudo
+      copy: src=~/shell_scripts/dbserver/dbhosts.conf dest=/home/ubuntu/dbhosts.conf mode=0777
+
+    - name: Fetch services.conf for Icinga2 configuration dbserver.mosudi docker container
+      become: yes
+      become_method: sudo
+      copy: src=~/shell_scripts/dbserver/dbservices.conf dest=/home/ubuntu/dbservices.conf mode=0777
+
+    - name: Fetch create_icinga2db.sh for Icinga2 configuration dbserver.mosudi docker container
+      become: yes
+      become_method: sudo
+      copy: src=~/shell_scripts/dbserver/create_icinga2db.sh dest=/home/ubuntu/create_icinga2db.sh mode=0777
+
+
+    - name: Creating ubuntu 14.04 Mysql Database server docker container with hostname dbserver.mosudi
+      become: yes
+      become_method: sudo 
+      shell: /home/ubuntu/db_lab_server.sh
+      args:
+        chdir: /home/ubuntu/
+#      register: db_lab_container
+
+
+########## ICINGA2 MASTER
+    - name: Setting Up Icinga2 DB root password
+      become: yes
+      become_method: sudo
+      script: ~/shell_scripts/create_icinga2db.sh
+      #script will reside within the Ansible master
+
+
+#    - name: Setting Up Icinga2 DB
+#      become: yes
+#      become_method: sudo
+#      shell: "source /root/create_icinga2db.sh"
+
+    - name: Start mysql service
+      become: yes
+      become_method: sudo
+      service: name=mysql state=reloaded
+
+    - name: Start Apache2 service
+      become: yes
+      become_method: sudo
+      service: name=apache2 state=reloaded
+
+    - name: Start Icinga2
+      become: yes
+      become_method: sudo
+      command: "icinga2 daemon -C"
+
+    - name: Enable Icinga2 features
+      become: yes
+      become_method: sudo
+      command: "icinga2 feature enable ido-mysql statusdata command perfdata"
+
+    - name: Restart icinga2
+      become: yes
+      become_method: sudo
+      service: name=icinga2 state=reloaded
+
+    - name: Creating Group Nagios 
+      become: yes
+      become_method: sudo
+      command: addgroup --system nagios
+    - name: Adding Nagios and also www-data
+      become: yes
+      become_method: sudo
+      command: usermod -a -G nagios www-data
+    - name: Setup config directory
+      become: yes
+      become_method: sudo
+      command: "icingacli setup config directory --group nagios"
+
+    - name: Making Icinga2 Web Folder Writeable
+      become: yes
+      become_method: sudo
+      command: chmod -R 777 /etc/icingaweb2/
+#     command: bash -c "chcon -R -t httpd_sys_content_t /etc/icingaweb2/"
+#     notify:
+#       - start icinga2
+#       - start mysql
+#       - start apache2
+
+    - name: Start Apace2 service
+      become: yes
+      become_method: sudo
+      service: name=apache2 state=reloaded
+
+    - name: Create Icinga2 Web Token
+      become: yes
+      become_method: sudo
+      command: icingacli setup token create
+
+    - name: Create Icinga2 Web Token
+      become: yes
+      become_method: sudo
+      command: bash -c "icingacli setup token show | cut -d':' -f2 | sed -e 's/^[ \t]*//'"
+      register: out
+    - name: Ido-mysql database username
+      become: yes
+      become_method: sudo
+      command: bash -c "grep user /etc/icinga2/features-enabled/ido-mysql.conf | tr -d ','| cut -d'=' -f2"
+      register: ido_db_username
+
+    - name: Ido-mysql database dbname
+      become: yes
+      become_method: sudo
+      command: bash -c "grep database /etc/icinga2/features-enabled/ido-mysql.conf | tr -d ','| cut -d'=' -f2 "
+      register: ido_db_name
+      
+    - name: Ido-mysql database password
+      become: yes
+      become_method: sudo
+      command: bash -c "grep password /etc/icinga2/features-enabled/ido-mysql.conf | tr -d ','| cut -d'=' -f2"
+      register: ido_db_password
+
+    - name: Ido-mysql database host
+      become: yes
+      become_method: sudo
+      command: bash -c "grep host /etc/icinga2/features-enabled/ido-mysql.conf | tr -d ','| cut -d'=' -f2"
+      register: ido_db_host
+
+    - name: Icinga2 Web Token
+      debug: var=out.stdout_lines
+
+    - name: Ido-mysql database username
+      debug: var=ido_db_username.stdout_lines
+
+    - name: Ido-mysql database dbname
+      debug: var=ido_db_name.stdout_lines
+
+    - name: Ido-mysql database password
+      debug: var=ido_db_password.stdout_lines
+
+    - name: Ido-mysql database host
+      debug: var=ido_db_host.stdout_lines
+
+
+
+
+
