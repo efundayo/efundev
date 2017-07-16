@@ -338,19 +338,19 @@
     - name: Creating Backup Directory For Icinga2 master database
       become: yes
       become_method: sudo
-      command: bash -c "rm -rf /root/backup/icinga2master  > /dev/null 2>&1 && mkdir /root/backup/icinga2master"
+      command: bash -c "rm -rf /root/backup/icinga2master  > /dev/null 2>&1 && mkdir /root/backup && mkdir /root/backup/icinga2master"
 
 
     - name: Creating Backup Directory For dbserver
       become: yes
       become_method: sudo
-      command: bash -c "rm -rf /root/backup/dbserver  > /dev/null 2>&1 && mkdir /root/backup/dbserver"
+      command: bash -c "rm -rf /root/backup/dbserver  > /dev/null 2>&1 && mkdir /root/backup && mkdir /root/backup/dbserver"
 
 
     - name: Creating Backup Script Directory 
       become: yes
       become_method: sudo
-      command: bash -c "rm -rf /root/backup/script  > /dev/null 2>&1 && mkdir /root/backup/script"
+      command: bash -c "rm -rf /root/backup/script  > /dev/null 2>&1 && mkdir /root/backup && mkdir /root/backup/script"
 
 
     - name: Fetch Icinga2 Master Database Backup Script
