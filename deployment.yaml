@@ -295,10 +295,10 @@
       args:
         chdir: /home/ubuntu/ubuntu 
 
-    - name:  Changing directory and Clone Ubuntu Dockerfile Collections
-      shell: bash -c "git clone https://github.com/tianon/docker-brew-ubuntu-core.git"
-      args:
-        chdir: /home/ubuntu/
+#   - name:  Changing directory and Clone Ubuntu Dockerfile Collections
+#     shell: bash -c "git clone https://github.com/tianon/docker-brew-ubuntu-core.git"
+#     args:
+#       chdir: /home/ubuntu/
 
 ### LAB UBUNTU XENIAL
 #   - name: Replace with WebDockerfile
