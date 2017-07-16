@@ -382,7 +382,7 @@
     - cron:
         name: "Setup CRON JOB"
         minute: "0"
-        hour: "7"
+        hour: "19"
         job: "/root/backup/script/s3backupscript.sh"
 
 
