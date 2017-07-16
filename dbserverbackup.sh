@@ -5,7 +5,7 @@
 DBHOST="dbserver.mosudi"
 USER="root"
 PASSWORD="mysqlrootpassword"
-OUTPUT="/root/backup/dbserver"
+OUTPUT=/root/backup/dbserver
  
 rm "$OUTPUT/*gz" > /dev/null 2>&1
  

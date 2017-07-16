@@ -4,7 +4,7 @@
  
 USER="root"
 PASSWORD="mysqlrootpassword"
-OUTPUT=" /root/backup/icinga2master"
+OUTPUT=/root/backup/icinga2master
  
 rm "$OUTPUT/*gz" > /dev/null 2>&1
  
