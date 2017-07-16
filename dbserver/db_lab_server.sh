@@ -55,12 +55,19 @@ docker exec -it $db_lab_container bash -c "icinga2 daemon -C "
 #ip addr show |grep 172.17.| grep -v null | awk '{print $2}'|cut -d '/' -f 1
 
 #mysql> CREATE USER 'root'@'%' IDENTIFIED BY 'mysqlrootpassword';
-###making remote database access possible
-user=root
-password=mysqlrootpassword
-##host=dbserver.mosudi
-docker exec -it $db_lab_container bash -c "mysqladmin -u root password $password "
-docker exec -it $db_lab_container bash -c ' mysql --host="$db_lab_container_hostname" --user="$user" --password="$password" --database="$database" --execute="CREATE USER 'root'@'%' IDENTIFIED BY $password; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';FLUSH PRIVILEGES;" '
+# mysql --user="$user" --password="$password" --database="$database" --execute="DROP DATABASE $user; CREATE DATABASE $database;"
+#Query OK, 0 rows affected (0.00 sec)
+
+#mysql> GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
+#Query OK, 0 rows affected (0.00 sec)
+
+#mysql> FLUSH PRIVILEGES;
+#Query OK, 0 rows affected (0.00 sec)
+
+#mysql> quit;
+#Bye
+
+
 
 
 #0e76f3dfa25c

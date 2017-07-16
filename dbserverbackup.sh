@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 #rm -rf /root/backup/dbserver  > /dev/null 2>&1 && mkdir /root/backup/dbserver

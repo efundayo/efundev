@@ -283,12 +283,19 @@ docker exec -it $db_lab_container bash -c "icinga2 daemon -C "
 #ip addr show |grep 172.17.| grep -v null | awk '{print $2}'|cut -d '/' -f 1
 
 #mysql> CREATE USER 'root'@'%' IDENTIFIED BY 'mysqlrootpassword';
-###making remote database access possible
-user=root
-password=mysqlrootpassword
-##host=dbserver.mosudi
-docker exec -it $db_lab_container bash -c "mysqladmin -u root password $password "
-docker exec -it $db_lab_container bash -c ' mysql --host="$db_lab_container_hostname" --user="$user" --password="$password" --database="$database" --execute="CREATE USER 'root'@'%' IDENTIFIED BY $password; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';FLUSH PRIVILEGES;" '
+# mysql --user="$user" --password="$password" --database="$database" --execute="DROP DATABASE $user; CREATE DATABASE $database;"
+#Query OK, 0 rows affected (0.00 sec)
+
+#mysql> GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
+#Query OK, 0 rows affected (0.00 sec)
+
+#mysql> FLUSH PRIVILEGES;
+#Query OK, 0 rows affected (0.00 sec)
+
+#mysql> quit;
+#Bye
+
+
 
 
 #0e76f3dfa25c
@@ -299,6 +306,7 @@ EOF
 
 chmod +x dbserver/db_lab_server.sh
 git add dbserver/db_lab_server.sh
+
 
 
 cat <<'EOF' > dbserver/DBDockerfile 
@@ -347,6 +355,7 @@ RUN echo "deb-src http://packages.icinga.com/ubuntu icinga-trusty main " >> /etc
 		bash-completion \
 		icinga2 \
 		mysql-server \
+        	mysql-client \
                 nagios-plugins  \
 		openssh-server \
 		php5 \
@@ -357,6 +366,11 @@ RUN echo "deb-src http://packages.icinga.com/ubuntu icinga-trusty main " >> /etc
 #RUN sed -i 's/;date.timezone =/date.timezone = Africa\/Lagos/g' /etc/php5/apache2/php.ini && \
   && service mysql start -C && \
   icinga2 daemon -C && \
+  password=mysqlrootpassword && \
+  mysqladmin -u root password $password && \
+  mysql -u root -p$password -e "CREATE USER 'root'@'%' IDENTIFIED BY $password;" && \
+  mysql -u root -p$password -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%'; FLUSH PRIVILEGES;" && \
+
 
 # END OF ADDED LINES
   rm -rf /var/lib/apt/lists/*
@@ -406,7 +420,6 @@ chmod +x icinga2master_dbbackup.sh
 git add icinga2master_dbbackup.sh
 
 cat <<'EOF' > dbserverbackup.sh
-
 #!/bin/bash
 
 #rm -rf /root/backup/dbserver  > /dev/null 2>&1 && mkdir /root/backup/dbserver
@@ -437,9 +450,13 @@ cat <<'EOF' >s3backupscript.sh
 #!/bin/bash
 /root/backup/script/icinga2master_dbbackup.sh
 /root/backup/script/dbserverbackup.sh
+touch ~/old_perfdata.txt
 cd /var/spool/icinga2/perfdata/ ; ls  -d -1 $PWD/{*,*} > ~/new_perfdata.txt
 grep -v -F -x -f ~/old_perfdata.txt ~/new_perfdata.txt > ~/action_perfdata.txt
-cat ~/action_perfdata.txt | xargs -I % aws s3 cp s3://mioemi2000/
+#cat ~/action_perfdata.txt | xargs -I % aws s3 cp s3://mioemi2000/
+cd ~
+mkdir copytest
+cat ~/action_perfdata.txt | xargs -I % aws s3 cp ~/copytest/
 mv ~/new_perfdata.txt ~/old_perfdata.txt
 aws s3 cp -r /root/backup/  s3://mioemi2000/
 
