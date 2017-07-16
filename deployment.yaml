@@ -107,8 +107,11 @@
 
   vars:
     ansible_ssh_private_key_file: "mioemi2000.pem"
-    ec2_access_key: AKIAIAF7O76ZXR5NP5MA
-    ec2_secret_key: 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
+#   ec2_access_key: AKIAIAF7O76ZXR5NP5MA
+#   ec2_secret_key: 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
+    ec2_access_key: AKIAJBZ7VLTODRVW5I2A
+    ec2_secret_key: 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
+
 
   tasks:
 
