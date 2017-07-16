@@ -250,6 +250,11 @@
       notify:
         - restart apache2
 
+    - name: set timezone to Africa/Lagos
+      timezone:
+        name: Africa/Lagos
+
+
     - name: Installing the package  "awscli"
       become: yes
       become_method: sudo
@@ -385,6 +390,12 @@
         hour: "19"
         job: "/root/backup/script/s3backupscript.sh"
 
+    - name:  Setup log data file
+      become: yes
+      become_method: sudo 
+      shell: bash -c 'touch ~/old_perfdata.txt'
+      args:
+        chdir: /home/ubuntu/
 
     - name: Update all packages to the latest version
       become: yes
