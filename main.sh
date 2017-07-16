@@ -1,7 +1,10 @@
 #!/bin/bash
 
 function deploy {
-rm -rf webserver  > /dev/null 2>&1 && mkdir webserver  && rm -rf dbserver  > /dev/null 2>&1 && mkdir dbserver  
+rm -rf webserver  > /dev/null 2>&1 && mkdir webserver  && rm -rf dbserver  > /dev/null 2>&1 && mkdir dbserver 
+git add webserver/
+git add dbserver/
+ 
 cat <<'EOF' >  create_icinga2db.sh
 #!/bin/bash
 
@@ -15,6 +18,9 @@ EOF
 chmod +x  create_icinga2db.sh
 
 cp  create_icinga2db.sh  dbserver/create_icinga2db.sh
+
+git add  dbserver/create_icinga2db.sh
+git add  create_icinga2db.sh
 
 cat <<'EOF' >  webserver/WebDockerfile 
 
@@ -92,7 +98,7 @@ CMD ["bash"]
 
 EOF
 
-
+git add webserver/WebDockerfile
 
 cat <<'EOF' >  webserver/web_lab_server.sh
 #!/bin/bash
@@ -111,8 +117,8 @@ echo "$(cat web_lab_container_ip)    $(cat web_lab_container_hostname) " >> /etc
 docker exec -it $web_lab_container bash -c "echo '$web_lab_container_ip    $web_lab_container_hostname '  >> /etc/hosts"
 docker inspect $web_lab_container | grep Gateway | grep -v null| cut -d '"' -f 4 | head -1 >lab_gateway_ip
 lab_gateway_ip="$(cat lab_gateway_ip)"
-lab_gateway_public_hostname=ec2-52-10-69-127.us-west-2.compute.amazonaws.com
-lab_gateway_public_ip=52.10.69.127
+lab_gateway_public_hostname=
+lab_gateway_public_ip=
 lab_gateway_hostname="$(hostname -f)"
 docker exec -it $web_lab_container bash -c "echo '$lab_gateway_ip    $lab_gateway_hostname '  >> /etc/hosts"
 
@@ -148,6 +154,8 @@ EOF
 
 chmod +x webserver/web_lab_server.sh
 
+git add webserver/web_lab_server.sh
+
 cat <<'EOF' >  webserver/webhosts.conf
 
 
@@ -165,6 +173,7 @@ object Host NodeName {
 }
 
 EOF
+git add webserver/webhosts.conf
 
 cat <<'EOF' >  webserver/webservices.conf
 
@@ -180,8 +189,9 @@ cat <<'EOF' >  webserver/webservices.conf
 
 
 
-
 EOF
+
+git add webserver/webservices.conf
 
 cat <<'EOF' >  dbserver/dbservices.conf
 
@@ -194,6 +204,8 @@ apply Service "MySQL - DB Monitor" {
 
 
 EOF
+
+git add dbserver/dbservices.conf
 
 cat <<'EOF' >  dbserver/dbhosts.conf
 
@@ -211,6 +223,7 @@ cat <<'EOF' >  dbserver/dbhosts.conf
 		}
 EOF
 
+git add dbserver/dbhosts.conf
 
 cat <<'EOF' >  dbserver/db_lab_server.sh
 #!/bin/bash
@@ -228,8 +241,8 @@ echo "$db_lab_container_ip    $db_lab_container_hostname " >> /etc/hosts
 docker exec -it $db_lab_container bash -c 'echo "$db_lab_container_ip    $db_lab_container_hostname " >> /etc/hosts'
 docker inspect $db_lab_container | grep Gateway | grep -v null| cut -d '"' -f 4 | head -1 >lab_gateway_ip
 lab_gateway_ip="$(cat lab_gateway_ip)"
-lab_gateway_public_hostname=ec2-52-10-69-127.us-west-2.compute.amazonaws.com
-lab_gateway_public_ip=52.10.69.127
+lab_gateway_public_hostname=
+lab_gateway_public_ip=
 lab_gateway_hostname="$(hostname -f)"
 docker exec -it $db_lab_container bash -c "echo '$lab_gateway_ip    $lab_gateway_hostname '  >> /etc/hosts"
 
@@ -276,7 +289,7 @@ docker exec -it $db_lab_container bash -c "icinga2 daemon -C "
 EOF
 
 chmod +x dbserver/db_lab_server.sh
-
+git add dbserver/db_lab_server.sh
 
 
 cat <<'EOF' > dbserver/DBDockerfile 
@@ -355,6 +368,8 @@ CMD ["bash"]
 
 EOF
 
+git add dbserver/DBDockerfile
+
 cat <<'EOF' > icinga2master_dbbackup.sh
 #!/bin/bash
 
@@ -377,6 +392,9 @@ for dbitem in $databases; do
 done
 
 EOF
+
+chmod +x icinga2master_dbbackup.sh
+git add icinga2master_dbbackup.sh
 
 cat <<'EOF' > dbserverbackup.sh
 
@@ -403,6 +421,9 @@ done
 
 EOF
 
+chmod +x dbserverbackup.sh
+git add dbserverbackup.sh
+
 cat <<'EOF' >s3backupscript.sh
 #!/bin/bash
 /root/backup/script/icinga2master_dbbackup.sh
@@ -415,7 +436,8 @@ aws s3 cp -r /root/backup/  s3://mioemi2000/
 
 
 EOF
-
+chmod +x s3backupscript.sh
+git add s3backupscript.sh
 git commit -am "Project update"
 
 }
