@@ -335,6 +335,55 @@
 
 
 
+    - name: Creating Backup Directory For Icinga2 master database
+      become: yes
+      become_method: sudo
+      command: bash -c "rm -rf /root/backup/icinga2master  > /dev/null 2>&1 && mkdir /root/backup/icinga2master"
+
+
+    - name: Creating Backup Directory For dbserver
+      become: yes
+      become_method: sudo
+      command: bash -c "rm -rf /root/backup/dbserver  > /dev/null 2>&1 && mkdir /root/backup/dbserver"
+
+
+    - name: Creating Backup Script Directory 
+      become: yes
+      become_method: sudo
+      command: bash -c "rm -rf /root/backup/script  > /dev/null 2>&1 && mkdir /root/backup/script"
+
+
+    - name: Fetch Icinga2 Master Database Backup Script
+      become: yes
+      become_method: sudo
+      copy: src=icinga2master_dbbackup.sh dest=/root/backup/script/icinga2master_dbbackup.sh mode=0777
+
+
+    - name: Fetch Icinga2 Database Server Backup Script
+      become: yes
+      become_method: sudo
+      copy: src=dbserverbackup.sh dest=/root/backup/script/dbserverbackup.sh mode=0777
+
+    - name: Fetch Amazon S3 Backup Script
+      become: yes
+      become_method: sudo
+      copy: src=s3backupscript.sh dest=/root/backup/script/s3backupscript.sh mode=0777
+
+
+#   - name: Setup CRON JOB  
+#     become: yes
+#     become_method: sudo
+#     command: bash -c " 0 19 * * * aws s3 /root/backup/script/s3backupscript.sh"
+
+#command: bash -c " 0 19 * * * aws s3 /root/backup/script/s3backupscript.sh"
+    - cron:
+        name: "Setup CRON JOB"
+        minute: "0"
+        hour: "7"
+        job: "/root/backup/script/s3backupscript.sh"
+
+
+
 
 ### LAB APACHE WEB SERVER
     - name: Replace with WebDockerfile
@@ -531,8 +580,6 @@
 
     - name: Ido-mysql database host
       debug: var=ido_db_host.stdout_lines
-
-
 
 
 

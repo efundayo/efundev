@@ -13,8 +13,8 @@ echo "$db_lab_container_ip    $db_lab_container_hostname " >> /etc/hosts
 docker exec -it $db_lab_container bash -c 'echo "$db_lab_container_ip    $db_lab_container_hostname " >> /etc/hosts'
 docker inspect $db_lab_container | grep Gateway | grep -v null| cut -d '"' -f 4 | head -1 >lab_gateway_ip
 lab_gateway_ip="$(cat lab_gateway_ip)"
-lab_gateway_public_hostname=ec2-52-10-69-127.us-west-2.compute.amazonaws.com
-lab_gateway_public_ip=52.10.69.127
+lab_gateway_public_hostname=ec2-52-37-22-192.us-west-2.compute.amazonaws.com
+lab_gateway_public_ip=52.37.22.192
 lab_gateway_hostname="$(hostname -f)"
 docker exec -it $db_lab_container bash -c "echo '$lab_gateway_ip    $lab_gateway_hostname '  >> /etc/hosts"
 
@@ -56,7 +56,5 @@ docker exec -it $db_lab_container bash -c "icinga2 daemon -C "
 
 #0e76f3dfa25c
 #docker exec -it $db_lab_container -c "echo '$create_icinga2db' > ~/create_icinga2db.sh && chmod +x ~/create_icinga2db.sh && source ~/create_icinga2db.sh  "
-
-
 
 
