@@ -457,7 +457,7 @@ xargs -a ~/action_perfdata.txt aws s3 cp s3://mioemi2000/
 
 cd ~
 mkdir copytest > /dev/null 2>&1
-cat ~/action_perfdata.txt | xargs -I %  cp ~/copytest/
+xargs -a ~/action_perfdata.txt cp -t ~/copytest
 mv ~/new_perfdata.txt ~/old_perfdata.txt
 #aws s3 cp -r /root/backup/  s3://mioemi2000/
 aws s3 cp -r /root/backup/  ~/copytest/
