@@ -402,7 +402,7 @@ USER="root"
 PASSWORD="mysqlrootpassword"
 OUTPUT=/root/backup/icinga2master
  
-rm "$OUTPUT/*gz" > /dev/null 2>&1
+rm $OUTPUT/*.gz > /dev/null 2>&1
  
 databases=`mysql --user=$USER --password=$PASSWORD -e "SHOW DATABASES;" | tr -d "| " | grep -v Database`
  
@@ -429,7 +429,7 @@ USER="root"
 PASSWORD="mysqlrootpassword"
 OUTPUT=/root/backup/dbserver
  
-rm "$OUTPUT/*gz" > /dev/null 2>&1
+rm $OUTPUT/*.gz > /dev/null 2>&1
  
 databases=`mysql --host=$DBHOST --user=$USER --password=$PASSWORD -e "SHOW DATABASES;" | tr -d "| " | grep -v Database`
  
