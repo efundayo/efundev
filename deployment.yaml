@@ -250,9 +250,17 @@
       notify:
         - restart apache2
 
-    - name: set timezone to Africa/Lagos
-      timezone:
-        name: Africa/Lagos
+    - name: Set timezone to Africa/Lagos
+      become: yes
+      become_method: sudo
+      copy: content='Africa/Lagos\n'
+            dest=/etc/timezone
+            owner=root
+            group=root
+            mode=0644
+            backup=yes
+      notify:
+	- update timezone
 
 
     - name: Installing the package  "awscli"
@@ -602,4 +610,6 @@
       debug: var=ido_db_host.stdout_lines
 
 
-
+  handlers:
+    - name: update timezone
+      command: dpkg-reconfigure --frontend noninteractive tzdata
