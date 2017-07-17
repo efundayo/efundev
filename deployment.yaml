@@ -259,8 +259,7 @@
             group=root
             mode=0644
             backup=yes
-      notify:
-	- update timezone
+      notify: update timezone
 
 
     - name: Installing the package  "awscli"
