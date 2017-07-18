@@ -451,8 +451,8 @@ aws configure set region us-west-2
 
 EOF
 chmod +x aws_configuration.sh
-sed -i 's/aws configure set aws_access_key_id/aws configure set aws_access_key_id $AWSAccessKeyId/g' aws_configuration.sh
-sed -i 's/aws configure set aws_secret_access_key/aws configure set aws_secret_access_key $AWSSecretKey/g' aws_configuration.sh
+sed -i "s/aws configure set aws_access_key_id/aws configure set aws_access_key_id $AWSAccessKeyId/g" aws_configuration.sh
+sed -i "s/aws configure set aws_secret_access_key/aws configure set aws_secret_access_key $AWSSecretKey/g" aws_configuration.sh
 
 
 
