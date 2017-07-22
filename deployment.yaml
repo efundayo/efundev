@@ -383,10 +383,21 @@
       become_method: sudo
       copy: src=s3backupscript.sh dest=/root/backup/script/s3backupscript.sh mode=0777
 
+    - name: Fetch Amazon AWS CLI Configuration Script
+      become: yes
+      become_method: sudo
+      copy: src=aws_configuration.sh dest=/root/backup/script/aws_configuration.sh mode=0777
+
     - name: Fetch Amazon S3 Backup CRON Script
       become: yes
       become_method: sudo
       copy: src=cron_script dest=/root/backup/script/cron_script mode=0777
+
+    - name: Configure aws CLI  
+      become: yes
+      become_method: sudo
+      command: bash -c " /root/backup/script/aws_configuration.sh "
+
 
     - name: Setup CRON JOB  
       become: yes
