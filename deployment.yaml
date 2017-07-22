@@ -383,18 +383,15 @@
       become_method: sudo
       copy: src=s3backupscript.sh dest=/root/backup/script/s3backupscript.sh mode=0777
 
+    - name: Fetch Amazon S3 Backup CRON Script
+      become: yes
+      become_method: sudo
+      copy: src=cron_script dest=/root/backup/script/cron_script mode=0777
 
-#   - name: Setup CRON JOB  
-#     become: yes
-#     become_method: sudo
-#     command: bash -c " 0 19 * * * aws s3 /root/backup/script/s3backupscript.sh"
-
-#command: bash -c " 0 19 * * * aws s3 /root/backup/script/s3backupscript.sh"
-    - cron:
-        name: "Setup CRON JOB"
-        minute: "0"
-        hour: "19"
-        job: "/root/backup/script/s3backupscript.sh"
+    - name: Setup CRON JOB  
+      become: yes
+      become_method: sudo
+      command: bash -c " crontab /root/backup/script/cron_script "
 
     - name:  Setup log data file
       become: yes
@@ -499,11 +496,6 @@
       script: create_icinga2db.sh
       #script will reside within the Ansible master
 
-
-#    - name: Setting Up Icinga2 DB
-#      become: yes
-#      become_method: sudo
-#      shell: "source /root/create_icinga2db.sh"
 
     - name: Start mysql service
       become: yes
