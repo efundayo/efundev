@@ -6,8 +6,8 @@
   vars:
     # prefix for naming
     prefix: staging
-    ec2_access_key: AKIAJX42ZWINPGUH4NEA
-    ec2_secret_key: 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
+    ec2_access_key: xxxxxxx
+    ec2_secret_key: xxxxxx
     ec2_region: us-west-2
     ec2_image: ami-6635cd06
 #   ec2_image: ami-efd0428f

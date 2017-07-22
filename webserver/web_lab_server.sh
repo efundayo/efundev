@@ -14,8 +14,8 @@ echo "$(cat web_lab_container_ip)    $(cat web_lab_container_hostname) " >> /etc
 docker exec -it $web_lab_container bash -c "echo '$web_lab_container_ip    $web_lab_container_hostname '  >> /etc/hosts"
 docker inspect $web_lab_container | grep Gateway | grep -v null| cut -d '"' -f 4 | head -1 >lab_gateway_ip
 lab_gateway_ip="$(cat lab_gateway_ip)"
-lab_gateway_public_hostname=
-lab_gateway_public_ip=
+lab_gateway_public_hostname=ec2-35-160-251-99.us-west-2.compute.amazonaws.com
+lab_gateway_public_ip=35.160.251.99
 lab_gateway_hostname="$(hostname -f)"
 docker exec -it $web_lab_container bash -c "echo '$lab_gateway_ip    $lab_gateway_hostname '  >> /etc/hosts"
 
