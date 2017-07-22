@@ -1,0 +1,7 @@
+#Anacron style
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+#This runs at 7 PM daily
+* 19 * * *   /root/backup/script/s3backupscript.sh
+
